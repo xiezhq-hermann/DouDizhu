@@ -23,7 +23,7 @@ classdef Starter_exported < matlab.apps.AppBase
     methods (Access = public)
         
         function [indicator, nickname] = exec(app)
-            pause(10);
+            %waitfor(app.indicator)
             while (app.indicator == 0)
                 pause(0.01) % 10ms pin
             end

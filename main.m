@@ -2,22 +2,50 @@
 for idx = 1:54
     cards(idx) = Card(idx);
 end
+cards(randperm(54));
 
-start = Starter;
-[indicator, nickname] =  start.exec();
-start.delete
-if (indicator == -1)
+
+% invoke login page
+start0 = Starter;
+start1 = Starter;
+start2 = Starter;
+[indicator0, nickname0] =  start0.exec();
+[indicator1, nickname1] =  start1.exec();
+[indicator2, nickname2] =  start2.exec();
+
+start0.delete;
+start1.delete;
+start2.delete;
+
+if (indicator0 == -1 | indicator1 == -1 | indicator2 == -1)
     return
 end
 
-% invoke login page
-user0 = Player(nickname);
-user1 = Player(nickname);
-user2 = Player(nickname);
 
-pause(5)
+% initialize board for player
+% nicknames = [nickname0, nickname1, nickname2]
+player0 = Player(nickname0);
+player1 = Player(nickname1);
+player2 = Player(nickname2);
+player0.rival_1 = player1;
+player0.rival_2 = player2;
+player1.rival_1 = player2;
+player1.rival_2 = player0;
+player2.rival_1 = player0;
+player2.rival_2 = player1;
+
+
+% initialize the player info
+player0.initialize(cards(1:17));
+player1.initialize(cards(18:34));
+player2.initialize(cards(35:51));
+
+
+% choose the Dizhu
+pause(20)
+
 
 % exit
-user0.delete
-user1.delete
-user2.delete
+player0.delete
+player1.delete
+player2.delete
