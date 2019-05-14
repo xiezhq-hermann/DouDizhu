@@ -17,31 +17,48 @@ start0.delete;
 start1.delete;
 start2.delete;
 
-if (indicator0 == -1 | indicator1 == -1 | indicator2 == -1)
+if (indicator0 == -1 || indicator1 == -1 || indicator2 == -1)
     return
 end
 
 
 % initialize board for player
-% nicknames = [nickname0, nickname1, nickname2]
+nicknames = [nickname0, nickname1, nickname2];
 player0 = Player(nickname0);
 player1 = Player(nickname1);
 player2 = Player(nickname2);
+players = [player0, player1, player2];
+
+
+% initialize the player info
 player0.rival_1 = player1;
 player0.rival_2 = player2;
 player1.rival_1 = player2;
 player1.rival_2 = player0;
 player2.rival_1 = player0;
 player2.rival_2 = player1;
-
-
-% initialize the player info
 player0.initialize(cards(1:17));
 player1.initialize(cards(18:34));
 player2.initialize(cards(35:51));
-
+restCards = cards(52:54);
 
 % choose the Dizhu
+if (player0.runForDizhu() == 1)
+    setDizhu([player0, player1, player2], restCards);
+    Dizhu = player0;
+elseif (player1.runForDizhu() == 1)
+    setDizhu([player1, player2, player0], restCards);
+    Dizhu = player1;
+elseif (player2.runForDizhu() == 1)
+    setDizhu([player2, player0, player1], restCards);
+    Dizhu = player2;
+else
+    setDizhu([player0, player1, player2], restCards);
+    Dizhu = player0;
+end
+
+
+% game start!
 pause(20)
 
 

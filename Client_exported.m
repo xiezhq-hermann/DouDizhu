@@ -32,9 +32,9 @@ classdef Client_exported < matlab.apps.AppBase
         Image_2                matlab.ui.control.Image
         Image_3                matlab.ui.control.Image
         Image2                 matlab.ui.control.Image
-        EditField_2            matlab.ui.control.NumericEditField
+        EditField_1            matlab.ui.control.NumericEditField
         Image2_2               matlab.ui.control.Image
-        EditField_3            matlab.ui.control.NumericEditField
+        EditField_2            matlab.ui.control.NumericEditField
         Label                  matlab.ui.control.Label
         Label_1                matlab.ui.control.Label
         Label_2                matlab.ui.control.Label
@@ -48,7 +48,10 @@ classdef Client_exported < matlab.apps.AppBase
 
     
     properties (Access = private)
-        bottons % Description
+        cardsHolded % Description
+        extraSlot
+        outSlot
+        takeDizhu = 0
     end
     
     methods (Access = private)
@@ -58,24 +61,42 @@ classdef Client_exported < matlab.apps.AppBase
         end
         function moveDown(app, staff)
             staff.Position = staff.Position - [0, 20, 0, 0];
-        end
-        function updateCards(app, cards)
-            numberOfCard = length(cards);
-            indent = floor((20 - numberOfCard)/2);
-            for idx = 1:numberOfCard
-                app.bottons(idx+indent).Icon = cards(idx).Icon;
-            end            
-        end
-        
+        end        
     end
     
     methods (Access = public)
         
         function results = initialize(app, cards)
-            app.bottons = [app.Button, app.Button_1, app.Button_2, app.Button_3, app.Button_4, app.Button_5, app.Button_6, app.Button_7, app.Button_8, app.Button_9, app.Button_10, app.Button_11, app.Button_12, app.Button_13, app.Button_14, app.Button_15, app.Button_16, app.Button_17, app.Button_18, app.Button_19];
-            app.updateCards(cards);
+            app.cardsHolded = [app.Button, app.Button_1, app.Button_2, app.Button_3, app.Button_4, app.Button_5, app.Button_6, app.Button_7, app.Button_8, app.Button_9, app.Button_10, app.Button_11, app.Button_12, app.Button_13, app.Button_14, app.Button_15, app.Button_16, app.Button_17, app.Button_18, app.Button_19];
+            app.extraSlot = [app.Button_20, app.Button_21, app.Button_22];
+            app.updateCards(cards, "hold");
         end
-        
+        function output = runForDizhu(app)
+            app.DropButton.Visible = true;
+            app.TakeButton.Visible = true;
+            while (app.takeDizhu == 0)
+                pause(0.01) % 10ms pin
+            end
+            output = app.takeDizhu;
+            return
+        end
+        function updateCards(app, cards, flag)       
+            if (flag == "extra")
+                slotCapacity = 3;
+                toShow = app.extraSlot;
+            elseif (flag == "out")
+                toShow = app.outSlot;
+                slotCapacity = 20;
+            else
+                toShow = app.cardsHolded;
+                slotCapacity = 20;
+            end
+            numberOfCard = length(cards);
+            indent = floor((slotCapacity - numberOfCard)/2);
+            for idx = 1:numberOfCard
+                toShow(idx+indent).Icon = cards(idx).Icon;
+            end            
+        end
     end
     
 
@@ -87,7 +108,6 @@ classdef Client_exported < matlab.apps.AppBase
             value = app.Button.Value;
             if (value)
                 app.moveUp(app.Button)
-                app.updateCards([1,2,3])
                 %app.Button.Position
             else
                 app.moveDown(app.Button)
@@ -302,6 +322,20 @@ classdef Client_exported < matlab.apps.AppBase
                 app.moveDown(app.Button_19)
             end
         end
+
+        % Button pushed function: DropButton
+        function DropButtonPushed(app, event)
+            app.takeDizhu = -1;
+            app.TakeButton.Visible = false;
+            app.DropButton.Visible = false;
+        end
+
+        % Button pushed function: TakeButton
+        function TakeButtonPushed(app, event)
+            app.takeDizhu = 1;
+            app.TakeButton.Visible = false;
+            app.DropButton.Visible = false;
+        end
     end
 
     % Component initialization
@@ -441,34 +475,35 @@ classdef Client_exported < matlab.apps.AppBase
 
             % Create DropButton
             app.DropButton = uibutton(app.UIFigure, 'push');
+            app.DropButton.ButtonPushedFcn = createCallbackFcn(app, @DropButtonPushed, true);
             app.DropButton.FontSize = 20;
+            app.DropButton.Visible = 'off';
             app.DropButton.Position = [172 152 91 41];
             app.DropButton.Text = 'Drop';
 
             % Create Button_20
             app.Button_20 = uibutton(app.UIFigure, 'state');
-            app.Button_20.Enable = 'off';
             app.Button_20.Icon = '0.jpg';
             app.Button_20.Text = '';
             app.Button_20.Position = [404 453 41 56];
 
             % Create Button_21
             app.Button_21 = uibutton(app.UIFigure, 'state');
-            app.Button_21.Enable = 'off';
             app.Button_21.Icon = '0.jpg';
             app.Button_21.Text = '';
             app.Button_21.Position = [361 453 41 56];
 
             % Create Button_22
             app.Button_22 = uibutton(app.UIFigure, 'state');
-            app.Button_22.Enable = 'off';
             app.Button_22.Icon = '0.jpg';
             app.Button_22.Text = '';
             app.Button_22.Position = [444 453 41 56];
 
             % Create TakeButton
             app.TakeButton = uibutton(app.UIFigure, 'push');
+            app.TakeButton.ButtonPushedFcn = createCallbackFcn(app, @TakeButtonPushed, true);
             app.TakeButton.FontSize = 20;
+            app.TakeButton.Visible = 'off';
             app.TakeButton.Position = [285 152 91 41];
             app.TakeButton.Text = 'Take!';
 
@@ -485,47 +520,47 @@ classdef Client_exported < matlab.apps.AppBase
             app.Image2.Position = [88 309 62 89];
             app.Image2.ImageSource = '0.jpg';
 
-            % Create EditField_2
-            app.EditField_2 = uieditfield(app.UIFigure, 'numeric');
-            app.EditField_2.Editable = 'off';
-            app.EditField_2.FontSize = 20;
-            app.EditField_2.FontColor = [0 0.4471 0.7412];
-            app.EditField_2.Position = [102 335 35 35];
-            app.EditField_2.Value = 17;
+            % Create EditField_1
+            app.EditField_1 = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_1.Editable = 'off';
+            app.EditField_1.FontSize = 20;
+            app.EditField_1.FontColor = [0 0.4471 0.7412];
+            app.EditField_1.Position = [102 335 35 35];
+            app.EditField_1.Value = 17;
 
             % Create Image2_2
             app.Image2_2 = uiimage(app.UIFigure);
             app.Image2_2.Position = [701 309 62 89];
             app.Image2_2.ImageSource = '0.jpg';
 
-            % Create EditField_3
-            app.EditField_3 = uieditfield(app.UIFigure, 'numeric');
-            app.EditField_3.Editable = 'off';
-            app.EditField_3.FontSize = 20;
-            app.EditField_3.FontColor = [0 0.4471 0.7412];
-            app.EditField_3.Position = [715 335 35 35];
-            app.EditField_3.Value = 17;
+            % Create EditField_2
+            app.EditField_2 = uieditfield(app.UIFigure, 'numeric');
+            app.EditField_2.Editable = 'off';
+            app.EditField_2.FontSize = 20;
+            app.EditField_2.FontColor = [0 0.4471 0.7412];
+            app.EditField_2.Position = [715 335 35 35];
+            app.EditField_2.Value = 17;
 
             % Create Label
             app.Label = uilabel(app.UIFigure);
             app.Label.FontSize = 20;
             app.Label.FontWeight = 'bold';
             app.Label.FontColor = [0.851 0.3255 0.098];
-            app.Label.Position = [69 162 57 31];
+            app.Label.Position = [69 162 123 31];
 
             % Create Label_1
             app.Label_1 = uilabel(app.UIFigure);
             app.Label_1.FontSize = 20;
             app.Label_1.FontWeight = 'bold';
             app.Label_1.FontColor = [0.851 0.3255 0.098];
-            app.Label_1.Position = [172 500 57 31];
+            app.Label_1.Position = [172 491 122 31];
 
             % Create Label_2
             app.Label_2 = uilabel(app.UIFigure);
             app.Label_2.FontSize = 20;
             app.Label_2.FontWeight = 'bold';
             app.Label_2.FontColor = [0.851 0.3255 0.098];
-            app.Label_2.Position = [625 500 57 31];
+            app.Label_2.Position = [558 491 124 31];
 
             % Create SCOREEditField_3Label
             app.SCOREEditField_3Label = uilabel(app.UIFigure);
@@ -554,14 +589,14 @@ classdef Client_exported < matlab.apps.AppBase
             % Create SCOREEditField_5Label
             app.SCOREEditField_5Label = uilabel(app.UIFigure);
             app.SCOREEditField_5Label.HorizontalAlignment = 'right';
-            app.SCOREEditField_5Label.Position = [587 470 48 22];
+            app.SCOREEditField_5Label.Position = [558 470 48 22];
             app.SCOREEditField_5Label.Text = 'SCORE';
 
             % Create SCOREEditField_2
             app.SCOREEditField_2 = uieditfield(app.UIFigure, 'numeric');
             app.SCOREEditField_2.Editable = 'off';
             app.SCOREEditField_2.HorizontalAlignment = 'center';
-            app.SCOREEditField_2.Position = [643 470 33 22];
+            app.SCOREEditField_2.Position = [614 470 33 22];
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
