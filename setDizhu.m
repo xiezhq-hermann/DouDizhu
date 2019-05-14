@@ -12,6 +12,7 @@ function setDizhu(players, restCards)
     players(3).updateDisplayName();
     
     players(1).cards = [players(1).cards, restCards];
+    assert(length(players(1).cards) == 20)
     players(1).numHandCards = players(1).numHandCards + length(restCards);
     players(1).updateDisplayCards();
     players(2).updateDisplayCards();

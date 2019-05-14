@@ -44,22 +44,22 @@ restCards = cards(52:54);
 
 % choose the Dizhu
 if (player0.runForDizhu() == 1)
-    setDizhu([player0, player1, player2], restCards);
-    Dizhu = player0;
 elseif (player1.runForDizhu() == 1)
-    setDizhu([player1, player2, player0], restCards);
-    Dizhu = player1;
+    players = [player1, player2, player0]; 
 elseif (player2.runForDizhu() == 1)
-    setDizhu([player2, player0, player1], restCards);
-    Dizhu = player2;
+    players = [player2, player0, player1];
 else
-    setDizhu([player0, player1, player2], restCards);
-    Dizhu = player0;
 end
+setDizhu(players, restCards);
 
 
 % game start!
-pause(20)
+while (players(1).numHandCards ~= 0 && players(2).numHandCards ~= 0 && players(3).numHandCards ~= 0)
+    outCard(players);
+    players = [players(2), players(3), players(1)];
+end
+
+% pause(20)
 
 
 % exit
