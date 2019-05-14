@@ -21,4 +21,15 @@ function setDizhu(players, restCards)
     players(1).board.updateCards(restCards, "extra");
     players(2).board.updateCards(restCards, "extra");
     players(3).board.updateCards(restCards, "extra");
+    
+    players(1).board.PASSButton.Visible = true;
+    players(2).board.PASSButton.Visible = true;
+    players(3).board.PASSButton.Visible = true;
+    players(1).board.TIPButton.Visible = true;
+    players(2).board.TIPButton.Visible = true;
+    players(3).board.TIPButton.Visible = true;
+    players(1).board.OUTButton.Visible = true;
+    players(2).board.OUTButton.Visible = true;
+    players(3).board.OUTButton.Visible = true;
+
 end
