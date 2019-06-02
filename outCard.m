@@ -9,6 +9,8 @@ function outCard(players)
     players(3).board.Lamp_1.Visible = true;
 
     playerOnTurn = players(1);
+    
+    disp('my turn!!');
     outCards = playerOnTurn.myTurn();
 
     if isempty(outCards)

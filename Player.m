@@ -30,9 +30,10 @@ classdef Player < handle
         end
     end
     methods
-        function obj = Player(name)
-            obj.board = Client;
+        function obj = Player(name, x, y)
+            obj.board = Client(x, y);
             obj.nickName = name;
+            obj.board.Label.Text = obj.nickName;
         end
 
         function initialize(obj, cards)
@@ -44,10 +45,9 @@ classdef Player < handle
 
         end
 
-        function output = runForDizhu(obj)
+        function runForDizhu(obj, players, restCards)
             %myFun - Description
-            output = obj.board.runForDizhu();
-            
+            obj.board.runForDizhu(players, restCards);
         end
 
         function outCards = myTurn(obj)
