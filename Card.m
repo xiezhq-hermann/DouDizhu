@@ -15,6 +15,10 @@ classdef Card
             %   Detailed explanation goes here
             obj.ID = ID;
             obj.Icon = "img/" + string(ID) + ".jpg";
+            obj.Number = ceil(ID/4);
+            if (ID == 54)
+                obj.Number = 15;
+            end
         end
         
         function suit = getSuit(obj)

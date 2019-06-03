@@ -1,0 +1,35 @@
+function type = classify(cards)
+%     for card = cards
+%         disp(num2str(card.Number));
+%     end
+    if (length(cards) == 2 && cards(1).Number == 14 && cards(2).Number == 15)
+        disp("Joker!");
+        type = "Joker";
+    elseif (length(cards) == 4 && cards(1).Number == cards(2).Number &&  cards(2).Number == cards(3).Number && cards(3).Number == cards(4).Number)
+        disp("bomb!");
+        type = "bomb";
+    elseif (length(cards) == 8 && cards(1).Number == cards(2).Number &&  cards(2).Number == cards(3).Number && cards(4).Number == cards(5).Number && cards(5).Number == cards(6).Number)
+        disp("airplane");
+        type = "airplane";
+    elseif (length(cards) == 6 && cards(1).Number == cards(2).Number && cards(2).Number == cards(3).Number && cards(3).Number == cards(4).Number)
+        disp("four with two");
+        type = "fourTwo";
+    elseif (length(cards) == 4 && cards(1).Number == cards(2).Number &&  cards(2).Number == cards(3).Number)
+        disp("three with one");
+        type = "fourTwo";
+    elseif (mod(length(cards),2) == 0 && length(cards) >= 6 && cards(1).Number == cards(2).Number &&  cards(3).Number == cards(4).Number && cards(5).Number == cards(6).Number)
+        disp("sequence pair");
+        type = "seqPair";
+    elseif (length(cards) == 1)
+        disp("single");
+        type = "single";
+    elseif (length(cards) == 2 && cards(1).Number == cards(2).Number)
+        disp("pair");
+        type = "pair";
+    elseif (length(cards) == 2 && cards(1).Number == cards(2).Number)
+        disp("pair");
+        type = "pair";
+    else
+        type = "unknown";
+    end
+end

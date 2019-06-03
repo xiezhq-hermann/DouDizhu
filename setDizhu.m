@@ -31,5 +31,8 @@ function setDizhu(players, restCards)
     players(1).board.OUTButton.Visible = true;
     players(2).board.OUTButton.Visible = true;
     players(3).board.OUTButton.Visible = true;
+    players(1).board.RESETButton.Visible = true;
+    players(2).board.RESETButton.Visible = true;
+    players(3).board.RESETButton.Visible = true;
 
 end

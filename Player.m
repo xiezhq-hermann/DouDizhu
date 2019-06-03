@@ -50,8 +50,8 @@ classdef Player < handle
             obj.board.runForDizhu(players, restCards);
         end
 
-        function outCards = myTurn(obj)
-            outCards = obj.board.myTurn();
+        function outCards = myTurn(obj, players, prev_player)
+            obj.board.myTurn(players, prev_player);
         end
 
         function delete(obj)
