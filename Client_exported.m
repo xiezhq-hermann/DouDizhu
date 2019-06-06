@@ -70,17 +70,22 @@ classdef Client_exported < matlab.apps.AppBase
         Lamp                   matlab.ui.control.Lamp
         Lamp_1                 matlab.ui.control.Lamp
         Lamp_2                 matlab.ui.control.Lamp
+        RESETButton            matlab.ui.control.Button
+        Image3                 matlab.ui.control.Image
     end
 
     
-    properties (Access = private)
+    properties (Access = public)
         holdSlot % Description
         extraSlot
         outSlot
         toOut
         takeDizhu = 0
         cardsHolded % Description
-        outIndicator = 0
+        players
+        restCards
+        prevCards = []
+        prev_player
     end
     
     methods (Access = private)
@@ -92,10 +97,10 @@ classdef Client_exported < matlab.apps.AppBase
             staff.Position = staff.Position - [0, 20, 0, 0];
         end
         
-        function ret = checkValidCore(app)
-            % more policy to add, currently out randomly
-            ret = ~isempty(app.toOut);
-        end
+%         function ret = checkValidCore(app)
+%             % more policy to add, currently out randomly
+%             ret = ~isempty(app.toOut);
+%         end
         function checkValid(app, idx)
 %             app.toOut = [app.toOut, app.cardsHolded(idx)];
             app.toOut = [];
@@ -106,11 +111,22 @@ classdef Client_exported < matlab.apps.AppBase
                     app.toOut = [app.toOut, app.cardsHolded(idx)];
                 end
             end
-            if (checkValidCore(app))
+            if (checkValidCore(app.toOut, app.prevCards))
                 % Here more policy to added
                 app.OUTButton.Enable = true;
             else
                 app.OUTButton.Enable = false;
+            end
+        end
+        
+        function decisionDizhu(app)
+            app.TakeButton.Visible = false;
+            app.DropButton.Visible = false;
+            if (app.takeDizhu == 1)
+                setDizhu(app.players, app.restCards);
+            else
+                players_ = [app.players(2), app.players(3), app.players(1)];
+                runforDizhu(players_, app.restCards);
             end
         end
     end
@@ -123,14 +139,11 @@ classdef Client_exported < matlab.apps.AppBase
             app.outSlot = [app.Button_23, app.Button_24, app.Button_25, app.Button_26, app.Button_27, app.Button_28, app.Button_29, app.Button_30, app.Button_31, app.Button_32, app.Button_33, app.Button_34, app.Button_35, app.Button_36, app.Button_37, app.Button_38, app.Button_39, app.Button_40, app.Button_41, app.Button_42];
             app.updateCards(cards, "hold");
         end
-        function output = runForDizhu(app)
+        function runForDizhu(app, players, restCards)
+            app.players = players;
+            app.restCards = restCards;
             app.DropButton.Visible = true;
             app.TakeButton.Visible = true;
-            while (app.takeDizhu == 0)
-                pause(0.01) % 10ms pin
-            end
-            output = app.takeDizhu;
-            return
         end
         function updateCards(app, cards, flag)       
             if (flag == "extra")
@@ -138,6 +151,7 @@ classdef Client_exported < matlab.apps.AppBase
                 toShow = app.extraSlot;
             elseif (flag == "out")
                 toShow = app.outSlot;
+                app.prevCards = cards;
                 slotCapacity = 20;
             else
                 toShow = app.holdSlot;
@@ -159,21 +173,28 @@ classdef Client_exported < matlab.apps.AppBase
                 end
             end
         end
-        function outCards = myTurn(app)
-            while (app.outIndicator == 0)
-                pause(0.01) % 10ms pin
+        function myTurn(app, players, prev_player)
+            app.players = players;
+            app.prev_player = prev_player;
+            if (prev_player == players(1))
+                app.prevCards = [];
             end
-            if (app.outIndicator == 1)
-                outCards = app.toOut;
-            else
-                outCards = [];
-            end            
+        end
+        
+        function finish(app, status)
+            app.Image3.ImageSource = status + ".jpg";
+            app.Image3.Visible = true;
         end
     end
     
 
     % Callbacks that handle component events
     methods (Access = private)
+
+        % Code that executes after component creation
+        function startupFcn(app, x, y)
+            app.UIFigure.Position = [x y 800 540];
+        end
 
         % Value changed function: Button
         function ButtonValueChanged(app, event)
@@ -438,26 +459,29 @@ classdef Client_exported < matlab.apps.AppBase
         % Button pushed function: DropButton
         function DropButtonPushed(app, event)
             app.takeDizhu = -1;
-            app.TakeButton.Visible = false;
-            app.DropButton.Visible = false;
+            app.decisionDizhu();
         end
 
         % Button pushed function: TakeButton
         function TakeButtonPushed(app, event)
             app.takeDizhu = 1;
-            app.TakeButton.Visible = false;
-            app.DropButton.Visible = false;
+            app.decisionDizhu();
         end
 
         % Button pushed function: OUTButton
         function OUTButtonPushed(app, event)
             app.OUTButton.Enable = false;
-            app.outIndicator = 1;
+            outedCard(app.players, app.toOut, app.prev_player);
         end
 
         % Button pushed function: PASSButton
         function PASSButtonPushed(app, event)
-            app.outIndicator = -1;
+            outedCard(app.players, [], app.prev_player);
+        end
+
+        % Button pushed function: RESETButton
+        function RESETButtonPushed(app, event)
+            app.updateCards(app.cardsHolded, "hold");
         end
     end
 
@@ -469,178 +493,178 @@ classdef Client_exported < matlab.apps.AppBase
 
             % Create UIFigure and hide until all components are created
             app.UIFigure = uifigure('Visible', 'off');
-            app.UIFigure.Position = [100 100 833 693];
+            app.UIFigure.Position = [100 100 800 540];
             app.UIFigure.Name = 'UI Figure';
 
             % Create Button
             app.Button = uibutton(app.UIFigure, 'state');
             app.Button.ValueChangedFcn = createCallbackFcn(app, @ButtonValueChanged, true);
             app.Button.Text = '';
-            app.Button.Position = [168 68 66 91];
+            app.Button.Position = [154 1 66 91];
 
             % Create Button_1
             app.Button_1 = uibutton(app.UIFigure, 'state');
             app.Button_1.ValueChangedFcn = createCallbackFcn(app, @Button_1ValueChanged, true);
             app.Button_1.Text = '';
-            app.Button_1.Position = [195 68 66 91];
+            app.Button_1.Position = [181 1 66 91];
 
             % Create Button_2
             app.Button_2 = uibutton(app.UIFigure, 'state');
             app.Button_2.ValueChangedFcn = createCallbackFcn(app, @Button_2ValueChanged, true);
             app.Button_2.Text = '';
-            app.Button_2.Position = [224 68 66 91];
+            app.Button_2.Position = [210 1 66 91];
 
             % Create Button_3
             app.Button_3 = uibutton(app.UIFigure, 'state');
             app.Button_3.ValueChangedFcn = createCallbackFcn(app, @Button_3ValueChanged, true);
             app.Button_3.Text = '';
-            app.Button_3.Position = [251 68 66 91];
+            app.Button_3.Position = [237 1 66 91];
 
             % Create Button_4
             app.Button_4 = uibutton(app.UIFigure, 'state');
             app.Button_4.ValueChangedFcn = createCallbackFcn(app, @Button_4ValueChanged, true);
             app.Button_4.Text = '';
-            app.Button_4.Position = [280 68 66 91];
+            app.Button_4.Position = [266 1 66 91];
 
             % Create Button_5
             app.Button_5 = uibutton(app.UIFigure, 'state');
             app.Button_5.ValueChangedFcn = createCallbackFcn(app, @Button_5ValueChanged, true);
             app.Button_5.Text = '';
-            app.Button_5.Position = [307 68 66 91];
+            app.Button_5.Position = [293 1 66 91];
 
             % Create Button_6
             app.Button_6 = uibutton(app.UIFigure, 'state');
             app.Button_6.ValueChangedFcn = createCallbackFcn(app, @Button_6ValueChanged, true);
             app.Button_6.Text = '';
-            app.Button_6.Position = [336 68 66 91];
+            app.Button_6.Position = [322 1 66 91];
 
             % Create Button_7
             app.Button_7 = uibutton(app.UIFigure, 'state');
             app.Button_7.ValueChangedFcn = createCallbackFcn(app, @Button_7ValueChanged, true);
             app.Button_7.Text = '';
-            app.Button_7.Position = [363 68 66 91];
+            app.Button_7.Position = [349 1 66 91];
 
             % Create Button_8
             app.Button_8 = uibutton(app.UIFigure, 'state');
             app.Button_8.ValueChangedFcn = createCallbackFcn(app, @Button_8ValueChanged, true);
             app.Button_8.Text = '';
-            app.Button_8.Position = [392 68 66 91];
+            app.Button_8.Position = [378 1 66 91];
 
             % Create Button_9
             app.Button_9 = uibutton(app.UIFigure, 'state');
             app.Button_9.ValueChangedFcn = createCallbackFcn(app, @Button_9ValueChanged, true);
             app.Button_9.Text = '';
-            app.Button_9.Position = [419 68 66 91];
+            app.Button_9.Position = [405 1 66 91];
 
             % Create Button_10
             app.Button_10 = uibutton(app.UIFigure, 'state');
             app.Button_10.ValueChangedFcn = createCallbackFcn(app, @Button_10ValueChanged, true);
             app.Button_10.Text = '';
-            app.Button_10.Position = [448 68 66 91];
+            app.Button_10.Position = [434 1 66 91];
 
             % Create Button_11
             app.Button_11 = uibutton(app.UIFigure, 'state');
             app.Button_11.ValueChangedFcn = createCallbackFcn(app, @Button_11ValueChanged, true);
             app.Button_11.Text = '';
-            app.Button_11.Position = [475 68 66 91];
+            app.Button_11.Position = [461 1 66 91];
 
             % Create Button_12
             app.Button_12 = uibutton(app.UIFigure, 'state');
             app.Button_12.ValueChangedFcn = createCallbackFcn(app, @Button_12ValueChanged, true);
             app.Button_12.Text = '';
-            app.Button_12.Position = [504 68 66 91];
+            app.Button_12.Position = [490 1 66 91];
 
             % Create Button_13
             app.Button_13 = uibutton(app.UIFigure, 'state');
             app.Button_13.ValueChangedFcn = createCallbackFcn(app, @Button_13ValueChanged, true);
             app.Button_13.Text = '';
-            app.Button_13.Position = [531 68 66 91];
+            app.Button_13.Position = [517 1 66 91];
 
             % Create Button_14
             app.Button_14 = uibutton(app.UIFigure, 'state');
             app.Button_14.ValueChangedFcn = createCallbackFcn(app, @Button_14ValueChanged, true);
             app.Button_14.Text = '';
-            app.Button_14.Position = [560 68 66 91];
+            app.Button_14.Position = [546 1 66 91];
 
             % Create Button_15
             app.Button_15 = uibutton(app.UIFigure, 'state');
             app.Button_15.ValueChangedFcn = createCallbackFcn(app, @Button_15ValueChanged, true);
             app.Button_15.Text = '';
-            app.Button_15.Position = [587 68 66 91];
+            app.Button_15.Position = [573 1 66 91];
 
             % Create Button_16
             app.Button_16 = uibutton(app.UIFigure, 'state');
             app.Button_16.ValueChangedFcn = createCallbackFcn(app, @Button_16ValueChanged, true);
             app.Button_16.Text = '';
-            app.Button_16.Position = [616 68 66 91];
+            app.Button_16.Position = [602 1 66 91];
 
             % Create Button_17
             app.Button_17 = uibutton(app.UIFigure, 'state');
             app.Button_17.ValueChangedFcn = createCallbackFcn(app, @Button_17ValueChanged, true);
             app.Button_17.Text = '';
-            app.Button_17.Position = [643 68 66 91];
+            app.Button_17.Position = [629 1 66 91];
 
             % Create Button_18
             app.Button_18 = uibutton(app.UIFigure, 'state');
             app.Button_18.ValueChangedFcn = createCallbackFcn(app, @Button_18ValueChanged, true);
             app.Button_18.Text = '';
-            app.Button_18.Position = [672 68 66 91];
+            app.Button_18.Position = [658 1 66 91];
 
             % Create Button_19
             app.Button_19 = uibutton(app.UIFigure, 'state');
             app.Button_19.ValueChangedFcn = createCallbackFcn(app, @Button_19ValueChanged, true);
             app.Button_19.Text = '';
-            app.Button_19.Position = [699 68 66 91];
+            app.Button_19.Position = [685 1 66 91];
 
             % Create Image
             app.Image = uiimage(app.UIFigure);
-            app.Image.Position = [69 63 100 100];
+            app.Image.Position = [55 1 100 100];
 
             % Create DropButton
             app.DropButton = uibutton(app.UIFigure, 'push');
             app.DropButton.ButtonPushedFcn = createCallbackFcn(app, @DropButtonPushed, true);
             app.DropButton.FontSize = 20;
             app.DropButton.Visible = 'off';
-            app.DropButton.Position = [172 185 91 41];
+            app.DropButton.Position = [270 171 91 41];
             app.DropButton.Text = 'Drop';
 
             % Create Button_20
             app.Button_20 = uibutton(app.UIFigure, 'state');
             app.Button_20.Icon = '0.jpg';
             app.Button_20.Text = '';
-            app.Button_20.Position = [397 555 41 56];
+            app.Button_20.Position = [369 455 41 56];
 
             % Create Button_21
             app.Button_21 = uibutton(app.UIFigure, 'state');
             app.Button_21.Icon = '0.jpg';
             app.Button_21.Text = '';
-            app.Button_21.Position = [354 555 41 56];
+            app.Button_21.Position = [326 455 41 56];
 
             % Create Button_22
             app.Button_22 = uibutton(app.UIFigure, 'state');
             app.Button_22.Icon = '0.jpg';
             app.Button_22.Text = '';
-            app.Button_22.Position = [437 555 41 56];
+            app.Button_22.Position = [409 455 41 56];
 
             % Create TakeButton
             app.TakeButton = uibutton(app.UIFigure, 'push');
             app.TakeButton.ButtonPushedFcn = createCallbackFcn(app, @TakeButtonPushed, true);
             app.TakeButton.FontSize = 20;
             app.TakeButton.Visible = 'off';
-            app.TakeButton.Position = [285 185 91 41];
+            app.TakeButton.Position = [403 171 91 41];
             app.TakeButton.Text = 'Take!';
 
             % Create Image_2
             app.Image_2 = uiimage(app.UIFigure);
-            app.Image_2.Position = [69 533 100 100];
+            app.Image_2.Position = [41 433 100 100];
 
             % Create Image_3
             app.Image_3 = uiimage(app.UIFigure);
-            app.Image_3.Position = [682 533 100 100];
+            app.Image_3.Position = [654 433 100 100];
 
             % Create Image2
             app.Image2 = uiimage(app.UIFigure);
-            app.Image2.Position = [88 437 62 89];
+            app.Image2.Position = [60 337 62 89];
             app.Image2.ImageSource = '0.jpg';
 
             % Create EditField_1
@@ -648,12 +672,12 @@ classdef Client_exported < matlab.apps.AppBase
             app.EditField_1.Editable = 'off';
             app.EditField_1.FontSize = 20;
             app.EditField_1.FontColor = [0 0.4471 0.7412];
-            app.EditField_1.Position = [102 463 35 35];
+            app.EditField_1.Position = [74 363 35 35];
             app.EditField_1.Value = 17;
 
             % Create Image2_2
             app.Image2_2 = uiimage(app.UIFigure);
-            app.Image2_2.Position = [699 436 62 89];
+            app.Image2_2.Position = [671 336 62 89];
             app.Image2_2.ImageSource = '0.jpg';
 
             % Create EditField_2
@@ -661,7 +685,7 @@ classdef Client_exported < matlab.apps.AppBase
             app.EditField_2.Editable = 'off';
             app.EditField_2.FontSize = 20;
             app.EditField_2.FontColor = [0 0.4471 0.7412];
-            app.EditField_2.Position = [713 462 35 35];
+            app.EditField_2.Position = [685 362 35 35];
             app.EditField_2.Value = 17;
 
             % Create Label
@@ -669,157 +693,157 @@ classdef Client_exported < matlab.apps.AppBase
             app.Label.FontSize = 20;
             app.Label.FontWeight = 'bold';
             app.Label.FontColor = [0.851 0.3255 0.098];
-            app.Label.Position = [69 195 123 31];
+            app.Label.Position = [55 128 150 30];
 
             % Create Label_1
             app.Label_1 = uilabel(app.UIFigure);
             app.Label_1.FontSize = 20;
             app.Label_1.FontWeight = 'bold';
             app.Label_1.FontColor = [0.851 0.3255 0.098];
-            app.Label_1.Position = [172 593 122 31];
+            app.Label_1.Position = [144 503 150 30];
 
             % Create Label_2
             app.Label_2 = uilabel(app.UIFigure);
             app.Label_2.FontSize = 20;
             app.Label_2.FontWeight = 'bold';
             app.Label_2.FontColor = [0.851 0.3255 0.098];
-            app.Label_2.Position = [558 593 124 31];
+            app.Label_2.Position = [500 503 150 30];
 
             % Create SCOREEditField_3Label
             app.SCOREEditField_3Label = uilabel(app.UIFigure);
             app.SCOREEditField_3Label.HorizontalAlignment = 'right';
-            app.SCOREEditField_3Label.Position = [69 164 48 22];
+            app.SCOREEditField_3Label.Position = [55 102 48 22];
             app.SCOREEditField_3Label.Text = 'SCORE';
 
             % Create SCOREEditField
             app.SCOREEditField = uieditfield(app.UIFigure, 'numeric');
             app.SCOREEditField.Editable = 'off';
             app.SCOREEditField.HorizontalAlignment = 'center';
-            app.SCOREEditField.Position = [125 164 33 22];
+            app.SCOREEditField.Position = [111 102 33 22];
 
             % Create SCOREEditField_4Label
             app.SCOREEditField_4Label = uilabel(app.UIFigure);
             app.SCOREEditField_4Label.HorizontalAlignment = 'right';
-            app.SCOREEditField_4Label.Position = [172 572 48 22];
+            app.SCOREEditField_4Label.Position = [144 472 48 22];
             app.SCOREEditField_4Label.Text = 'SCORE';
 
             % Create SCOREEditField_1
             app.SCOREEditField_1 = uieditfield(app.UIFigure, 'numeric');
             app.SCOREEditField_1.Editable = 'off';
             app.SCOREEditField_1.HorizontalAlignment = 'center';
-            app.SCOREEditField_1.Position = [228 572 33 22];
+            app.SCOREEditField_1.Position = [200 472 33 22];
 
             % Create SCOREEditField_5Label
             app.SCOREEditField_5Label = uilabel(app.UIFigure);
             app.SCOREEditField_5Label.HorizontalAlignment = 'right';
-            app.SCOREEditField_5Label.Position = [558 572 48 22];
+            app.SCOREEditField_5Label.Position = [530 472 48 22];
             app.SCOREEditField_5Label.Text = 'SCORE';
 
             % Create SCOREEditField_2
             app.SCOREEditField_2 = uieditfield(app.UIFigure, 'numeric');
             app.SCOREEditField_2.Editable = 'off';
             app.SCOREEditField_2.HorizontalAlignment = 'center';
-            app.SCOREEditField_2.Position = [614 572 33 22];
+            app.SCOREEditField_2.Position = [586 472 33 22];
 
             % Create Button_23
             app.Button_23 = uibutton(app.UIFigure, 'state');
             app.Button_23.Text = '';
-            app.Button_23.Position = [121 302 66 91];
+            app.Button_23.Position = [93 226 66 91];
 
             % Create Button_24
             app.Button_24 = uibutton(app.UIFigure, 'state');
             app.Button_24.Text = '';
-            app.Button_24.Position = [148 302 66 91];
+            app.Button_24.Position = [120 226 66 91];
 
             % Create Button_25
             app.Button_25 = uibutton(app.UIFigure, 'state');
             app.Button_25.Text = '';
-            app.Button_25.Position = [177 302 66 91];
+            app.Button_25.Position = [149 226 66 91];
 
             % Create Button_26
             app.Button_26 = uibutton(app.UIFigure, 'state');
             app.Button_26.Text = '';
-            app.Button_26.Position = [204 302 66 91];
+            app.Button_26.Position = [176 226 66 91];
 
             % Create Button_27
             app.Button_27 = uibutton(app.UIFigure, 'state');
             app.Button_27.Text = '';
-            app.Button_27.Position = [233 302 66 91];
+            app.Button_27.Position = [205 226 66 91];
 
             % Create Button_28
             app.Button_28 = uibutton(app.UIFigure, 'state');
             app.Button_28.Text = '';
-            app.Button_28.Position = [260 302 66 91];
+            app.Button_28.Position = [232 226 66 91];
 
             % Create Button_29
             app.Button_29 = uibutton(app.UIFigure, 'state');
             app.Button_29.Text = '';
-            app.Button_29.Position = [289 302 66 91];
+            app.Button_29.Position = [261 226 66 91];
 
             % Create Button_30
             app.Button_30 = uibutton(app.UIFigure, 'state');
             app.Button_30.Text = '';
-            app.Button_30.Position = [316 302 66 91];
+            app.Button_30.Position = [288 226 66 91];
 
             % Create Button_31
             app.Button_31 = uibutton(app.UIFigure, 'state');
             app.Button_31.Text = '';
-            app.Button_31.Position = [345 302 66 91];
+            app.Button_31.Position = [317 226 66 91];
 
             % Create Button_32
             app.Button_32 = uibutton(app.UIFigure, 'state');
             app.Button_32.Text = '';
-            app.Button_32.Position = [372 302 66 91];
+            app.Button_32.Position = [344 226 66 91];
 
             % Create Button_33
             app.Button_33 = uibutton(app.UIFigure, 'state');
             app.Button_33.Text = '';
-            app.Button_33.Position = [401 302 66 91];
+            app.Button_33.Position = [373 226 66 91];
 
             % Create Button_34
             app.Button_34 = uibutton(app.UIFigure, 'state');
             app.Button_34.Text = '';
-            app.Button_34.Position = [428 302 66 91];
+            app.Button_34.Position = [400 226 66 91];
 
             % Create Button_35
             app.Button_35 = uibutton(app.UIFigure, 'state');
             app.Button_35.Text = '';
-            app.Button_35.Position = [457 302 66 91];
+            app.Button_35.Position = [429 226 66 91];
 
             % Create Button_36
             app.Button_36 = uibutton(app.UIFigure, 'state');
             app.Button_36.Text = '';
-            app.Button_36.Position = [484 302 66 91];
+            app.Button_36.Position = [456 226 66 91];
 
             % Create Button_37
             app.Button_37 = uibutton(app.UIFigure, 'state');
             app.Button_37.Text = '';
-            app.Button_37.Position = [513 302 66 91];
+            app.Button_37.Position = [485 226 66 91];
 
             % Create Button_38
             app.Button_38 = uibutton(app.UIFigure, 'state');
             app.Button_38.Text = '';
-            app.Button_38.Position = [540 302 66 91];
+            app.Button_38.Position = [512 226 66 91];
 
             % Create Button_39
             app.Button_39 = uibutton(app.UIFigure, 'state');
             app.Button_39.Text = '';
-            app.Button_39.Position = [569 302 66 91];
+            app.Button_39.Position = [541 226 66 91];
 
             % Create Button_40
             app.Button_40 = uibutton(app.UIFigure, 'state');
             app.Button_40.Text = '';
-            app.Button_40.Position = [596 302 66 91];
+            app.Button_40.Position = [568 226 66 91];
 
             % Create Button_41
             app.Button_41 = uibutton(app.UIFigure, 'state');
             app.Button_41.Text = '';
-            app.Button_41.Position = [625 302 66 91];
+            app.Button_41.Position = [597 226 66 91];
 
             % Create Button_42
             app.Button_42 = uibutton(app.UIFigure, 'state');
             app.Button_42.Text = '';
-            app.Button_42.Position = [652 302 66 91];
+            app.Button_42.Position = [624 226 66 91];
 
             % Create PASSButton
             app.PASSButton = uibutton(app.UIFigure, 'push');
@@ -829,7 +853,8 @@ classdef Client_exported < matlab.apps.AppBase
             app.PASSButton.FontWeight = 'bold';
             app.PASSButton.FontAngle = 'italic';
             app.PASSButton.FontColor = [1 1 0];
-            app.PASSButton.Position = [233 181 100 48];
+            app.PASSButton.Visible = 'off';
+            app.PASSButton.Position = [211 106 100 48];
             app.PASSButton.Text = 'PASS';
 
             % Create TIPButton
@@ -839,7 +864,8 @@ classdef Client_exported < matlab.apps.AppBase
             app.TIPButton.FontWeight = 'bold';
             app.TIPButton.FontAngle = 'italic';
             app.TIPButton.FontColor = [1 1 0];
-            app.TIPButton.Position = [368 181 100 48];
+            app.TIPButton.Visible = 'off';
+            app.TIPButton.Position = [331 106 100 48];
             app.TIPButton.Text = 'TIP';
 
             % Create OUTButton
@@ -851,23 +877,41 @@ classdef Client_exported < matlab.apps.AppBase
             app.OUTButton.FontAngle = 'italic';
             app.OUTButton.FontColor = [1 1 0];
             app.OUTButton.Enable = 'off';
-            app.OUTButton.Position = [504 181 100 48];
+            app.OUTButton.Visible = 'off';
+            app.OUTButton.Position = [451 106 100 48];
             app.OUTButton.Text = 'OUT';
 
             % Create Lamp
             app.Lamp = uilamp(app.UIFigure);
             app.Lamp.Visible = 'off';
-            app.Lamp.Position = [135 195 34 34];
+            app.Lamp.Position = [40 163 34 34];
 
             % Create Lamp_1
             app.Lamp_1 = uilamp(app.UIFigure);
             app.Lamp_1.Visible = 'off';
-            app.Lamp_1.Position = [639 492 34 34];
+            app.Lamp_1.Position = [144 396 34 34];
 
             % Create Lamp_2
             app.Lamp_2 = uilamp(app.UIFigure);
             app.Lamp_2.Visible = 'off';
-            app.Lamp_2.Position = [177 491 34 34];
+            app.Lamp_2.Position = [618 396 34 34];
+
+            % Create RESETButton
+            app.RESETButton = uibutton(app.UIFigure, 'push');
+            app.RESETButton.ButtonPushedFcn = createCallbackFcn(app, @RESETButtonPushed, true);
+            app.RESETButton.BackgroundColor = [0.4941 0.1843 0.5569];
+            app.RESETButton.FontSize = 30;
+            app.RESETButton.FontWeight = 'bold';
+            app.RESETButton.FontAngle = 'italic';
+            app.RESETButton.FontColor = [1 1 0];
+            app.RESETButton.Visible = 'off';
+            app.RESETButton.Position = [571 106 116 48];
+            app.RESETButton.Text = 'RESET';
+
+            % Create Image3
+            app.Image3 = uiimage(app.UIFigure);
+            app.Image3.Visible = 'off';
+            app.Image3.Position = [270 163 243 217];
 
             % Show the figure after all components are created
             app.UIFigure.Visible = 'on';
@@ -878,13 +922,16 @@ classdef Client_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = Client_exported
+        function app = Client_exported(varargin)
 
             % Create UIFigure and components
             createComponents(app)
 
             % Register the app with App Designer
             registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @(app)startupFcn(app, varargin{:}))
 
             if nargout == 0
                 clear app

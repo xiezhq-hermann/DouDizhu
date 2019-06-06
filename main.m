@@ -1,16 +1,18 @@
 % Initialize the poker game
-% cards = shuffleCards();
-card_id = [1,2,5,6,17,21,29,33,37,38,41,42,43,45,46,47,54];
-card_id = [card_id, 3,4,9,10,11,12,18,19,22,23,25,26,30,34,39,48,49];
-card_id = [card_id, 7,8,13,14,15,16,20,24,27,28,31,32,35,36,40,50,51];
-card_id = [card_id, 44,52,53];
-cards = Card.empty(54,0);
-for idx = 1:54
-    cards(idx) = Card(card_id(idx));
-end
+cards = shuffleCards();
+% card_id = [1,2,5,6,17,21,29,33,37,38,41,42,43,45,46,47,54];
+% card_id = [card_id, 3,4,9,10,11,12,18,19,22,23,25,26,30,34,39,48,49];
+% card_id = [card_id, 7,8,13,14,15,16,20,24,27,28,31,32,35,36,40,50,51];
+% card_id = [card_id, 44,52,53];
+% cards = Card.empty(54,0);
+% for idx = 1:54
+%     cards(idx) = Card(card_id(idx));
+% end
 % invoke login page
 starters = invokeLogin();
 waitfor(starters(1), "indicator");
+waitfor(starters(2), "indicator");
+waitfor(starters(3), "indicator");
 players = initializePlayer(starters);
 
 % initialize the player info

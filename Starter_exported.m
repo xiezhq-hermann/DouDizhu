@@ -6,22 +6,19 @@ classdef Starter_exported < matlab.apps.AppBase
         StartGameButton           matlab.ui.control.Button
         ImFeelingLuckyCheckBox    matlab.ui.control.CheckBox
         YourNameEditField_2Label  matlab.ui.control.Label
-        YourNameEditField_2       matlab.ui.control.EditField
+        YourNameEditField         matlab.ui.control.EditField
         Label                     matlab.ui.control.Label
-        ExitButton_2              matlab.ui.control.Button
+        ExitButton                matlab.ui.control.Button
         NamePleaseLabel           matlab.ui.control.Label
         LoadingLabel              matlab.ui.control.Label
     end
 
-    
-    properties (Access = private)
-        indicator = 0 % 0 means nothing, 1 means start, -1 means exit
-        nickname = "null"
-        lucky = 0
-    end
-    
+    properties (Access = public)
+            indicator = 0 % 0 means nothing, 1 means start, -1 means exit
+            nickname = "null"
+            lucky = 0
+    end    
     methods (Access = public)
-        
         function [indicator, nickname] = exec(app)
             %waitfor(app.indicator)
             while (app.indicator == 0)
@@ -29,19 +26,24 @@ classdef Starter_exported < matlab.apps.AppBase
             end
             indicator = app.indicator;
             nickname = app.nickname;
-            return
         end
-        
-    end
-    
+        function [indicator, nickname] = getName(app)
+            indicator = app.indicator;
+            nickname = app.nickname;
+        end
+    end    
 
     % Callbacks that handle component events
     methods (Access = private)
 
+        % Code that executes after component creation
+        function startupFcn(app, x, y)
+            app.UIFigure.Position = [x y 640 480];
+        end
+
         % Value changed function: ImFeelingLuckyCheckBox
         function notLucky(app, event)
-            value = app.ImFeelingLuckyCheckBox.Value;
-            
+            value = app.ImFeelingLuckyCheckBox.Value;    
         end
 
         % Button pushed function: StartGameButton
@@ -54,13 +56,13 @@ classdef Starter_exported < matlab.apps.AppBase
             app.LoadingLabel.Visible = 'on';
         end
 
-        % Button pushed function: ExitButton_2
+        % Button pushed function: ExitButton
         function exitgame(app, event)
             app.indicator = -1;
             app.LoadingLabel.Visible = 'on';
         end
 
-        % Value changing function: YourNameEditField_2
+        % Value changing function: YourNameEditField
         function setName(app, event)
             changingValue = event.Value;
             app.nickname = changingValue;
@@ -101,11 +103,11 @@ classdef Starter_exported < matlab.apps.AppBase
             app.YourNameEditField_2Label.Position = [240 307 163 42];
             app.YourNameEditField_2Label.Text = 'Your Name!';
 
-            % Create YourNameEditField_2
-            app.YourNameEditField_2 = uieditfield(app.UIFigure, 'text');
-            app.YourNameEditField_2.ValueChangingFcn = createCallbackFcn(app, @setName, true);
-            app.YourNameEditField_2.FontSize = 30;
-            app.YourNameEditField_2.Position = [226 269 190 39];
+            % Create YourNameEditField
+            app.YourNameEditField = uieditfield(app.UIFigure, 'text');
+            app.YourNameEditField.ValueChangingFcn = createCallbackFcn(app, @setName, true);
+            app.YourNameEditField.FontSize = 30;
+            app.YourNameEditField.Position = [226 269 190 39];
 
             % Create Label
             app.Label = uilabel(app.UIFigure);
@@ -116,12 +118,12 @@ classdef Starter_exported < matlab.apps.AppBase
             app.Label.Position = [178 348 288 112];
             app.Label.Text = 'ÿÿÿÿÿ';
 
-            % Create ExitButton_2
-            app.ExitButton_2 = uibutton(app.UIFigure, 'push');
-            app.ExitButton_2.ButtonPushedFcn = createCallbackFcn(app, @exitgame, true);
-            app.ExitButton_2.FontSize = 30;
-            app.ExitButton_2.Position = [213 19 217 106];
-            app.ExitButton_2.Text = 'Exit';
+            % Create ExitButton
+            app.ExitButton = uibutton(app.UIFigure, 'push');
+            app.ExitButton.ButtonPushedFcn = createCallbackFcn(app, @exitgame, true);
+            app.ExitButton.FontSize = 30;
+            app.ExitButton.Position = [213 19 217 106];
+            app.ExitButton.Text = 'Exit';
 
             % Create NamePleaseLabel
             app.NamePleaseLabel = uilabel(app.UIFigure);
@@ -148,13 +150,16 @@ classdef Starter_exported < matlab.apps.AppBase
     methods (Access = public)
 
         % Construct app
-        function app = Starter_exported
+        function app = Starter_exported(varargin)
 
             % Create UIFigure and components
             createComponents(app)
 
             % Register the app with App Designer
             registerApp(app, app.UIFigure)
+
+            % Execute the startup function
+            runStartupFcn(app, @(app)startupFcn(app, varargin{:}))
 
             if nargout == 0
                 clear app

@@ -42,7 +42,6 @@ classdef Player < handle
             updateDisplayName(obj);
             updateDisplayScore(obj);
             obj.board.initialize(cards);
-
         end
 
         function runForDizhu(obj, players, restCards)
